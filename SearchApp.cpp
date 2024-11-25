@@ -53,6 +53,11 @@ class SearchAlgorithm {
         return 0;
     }
 
+    protected: void setSearchAndTotalTime() {
+        searchTime = getDuration();
+        totalTime = getDuration();
+    }
+
     /**
      * @brief In ra thông tin sau khi thực hiện thuật toán tìm kiếm,
      * bao gồm tên, các thời gian chạy.
@@ -130,13 +135,11 @@ class LinearSearch: public SearchAlgorithm {
         startTimeCount();
         for (int i = 0; i < (int) arr.size(); i++) {
             if (arr[i] == value) {
-                searchTime = getDuration();
-                totalTime = getDuration();
+                setSearchAndTotalTime();
                 return i;
             }
         }
-        searchTime = getDuration();
-        totalTime = getDuration();
+        setSearchAndTotalTime();
         return -1;
     }
 
@@ -158,8 +161,7 @@ class BinarySearch: public NeedSortedSearchAlgorithm {
         while (left <= right) {
             int mid = left + (right - left) / 2;
             if (sortedIndexArr[mid].first == value) {
-                searchTime = getDuration();
-                totalTime = getDuration();
+                setSearchAndTotalTime();
                 return sortedIndexArr[mid].second;
             } else if (sortedIndexArr[mid].first < value) {
                 left = mid + 1;
@@ -167,12 +169,83 @@ class BinarySearch: public NeedSortedSearchAlgorithm {
                 right = mid - 1;
             }
         }
-        searchTime = getDuration();
-        totalTime = getDuration();
+        setSearchAndTotalTime();
         return -1;
     }
+
     public: string getAlgorithm() override {
         return "BinarySearch";
+    }
+};
+
+class TernarySearch: public NeedSortedSearchAlgorithm {
+    public: int search(int value) override {
+        startTimeCount();
+        startTimeCount();
+        if(!isSorted) {
+            buildSortedArr();
+        }
+        buildTime = getDuration();
+        startTimeCount();
+        int left = 0, right = (int) sortedIndexArr.size() - 1;
+        while (left <= right) {
+            int mid1 = left + (right - left) / 3;
+            int mid2 = right - (right - left) / 3;
+            if (sortedIndexArr[mid1].first == value) {
+                setSearchAndTotalTime();
+                return sortedIndexArr[mid1].second;
+            } 
+            if (sortedIndexArr[mid2].first == value) {
+                setSearchAndTotalTime();
+                return sortedIndexArr[mid2].second;
+            } 
+            if (value < sortedIndexArr[mid1].first) {
+                right = mid1 - 1;
+            } else if (value > sortedIndexArr[mid2].first) {
+                left = mid2 + 1;
+            } else {
+                left = mid1 + 1;
+                right = mid2 - 1;
+            }
+        }
+        setSearchAndTotalTime();
+        return -1;
+    }
+
+    public: string getAlgorithm() override {
+        return "TernarySearch";
+    }
+};
+
+class JumpSearch: public NeedSortedSearchAlgorithm {
+    public: int search(int value) override {
+        startTimeCount();       
+        int step = (int) floor(sqrt((int) arr.size()));
+        int prev = 0, size = (int) arr.size();
+        startTimeCount();
+        if(!isSorted) {
+            buildSortedArr();
+        }
+        buildTime = getDuration();
+        startTimeCount();
+        while (sortedIndexArr[prev].first < value) {
+            prev += step;
+            if (prev >= size) {
+                break;
+            }        
+        }
+        for (int i = max(0, prev - step); i <= min(size, prev); i++) {
+            if (sortedIndexArr[i].first == value) {
+                setSearchAndTotalTime();
+                return sortedIndexArr[i].second;
+            }
+        }
+        setSearchAndTotalTime();
+        return -1;
+    }
+    
+    public: string getAlgorithm() override {
+        return "JumpSearch";
     }
 };
 
@@ -196,30 +269,33 @@ class SearchContext {
 
 class Tester {
     private: vector<pair<vector<int>, vector<int>>> tests;
+    private: SearchContext searchContext;
     public: void addTest(const vector<int> &test, const vector<int> &values) {
         this->tests.push_back({test, values});
     }
+    public: void testWith(const vector<int> &test, const vector<int> &value, SearchAlgorithm *searchAlgorithm) {
+        cout << searchAlgorithm->getAlgorithm() << ": " << endl;
+        searchAlgorithm->setArr(test);
+        searchContext.setSearchAlgorithm(searchAlgorithm);
+        for (int j = 0; j < (int) value.size(); j++) {
+            searchContext.search(value[j]);
+        }
+    }
+
     public: void test() {
         LinearSearch linearSearch;
         BinarySearch binarySearch;
-        SearchContext searchContext;
+        TernarySearch ternarySearch;
+        JumpSearch jumpSearch;
+        
         for(int i = 0; i < (int) tests.size(); i++) {
             vector<int> valueI = tests[i].second;
             vector<int> testI = tests[i].first;
             cout<<"Test "<<i+1<<" -------:"<<endl;
-            //LinearSearch
-            cout<<"LinearSearch: "<<endl;
-            linearSearch.setArr(testI);
-            searchContext.setSearchAlgorithm(&linearSearch);
-            for (int j = 0; j < (int) valueI.size(); j++) {
-                searchContext.search(valueI[j]);
-            }
-            cout<<"BinarySearch: "<<endl;
-            binarySearch.setArr(testI);
-            searchContext.setSearchAlgorithm(&binarySearch);
-            for (int j = 0; j < (int) valueI.size(); j++) {
-                searchContext.search(valueI[j]);
-            }
+            testWith(testI, valueI, &linearSearch);
+            testWith(testI, valueI, &binarySearch);
+            testWith(testI, valueI, &ternarySearch);
+            testWith(testI, valueI, &jumpSearch);
         }
     }
 };
