@@ -300,22 +300,61 @@ class Tester {
     }
 };
 
-int main() {
-    vector<int> test1, test2;
-    int N = 1e6;
-    for(int i = 0; i < N; i++) {
-        test1.push_back(i);
-        test2.push_back(N+1-i);
-    }
-    vector<int> values;
-    for(int i = 1; i <= 12; i++) {
-        values.push_back(test1[i * N/13]);
-    }
-    Tester tester;
-    tester.addTest(test1, values);
-    tester.addTest(test2, values);
+class Reader {
+    protected: vector<int> test;
+    protected: vector<int> values;
 
-    tester.test();
+    public: virtual void read() = 0;
+
+    public: vector<int> getTest() {
+        return test;
+    }
+
+    public: vector<int> getValues() {
+        return values;
+    }
+
+    public: void clear() {
+        test.clear();
+        values.clear();
+    }
+    ~Reader(){};
+};
+
+class StreamReader: public Reader {
+    public: void read() override {
+        int n, x, value;
+        cout << "Input size of test: ";
+        cin >> n;
+        cout << "Input elements of test:" << endl;
+        for (int i = 0; i < n; i++) {
+            cin >> x;
+            test.push_back(x);
+        } 
+        cout << "Input number of value you want to search: ";
+        cin >> n;
+        cout << "Input values you want to search:" << endl;
+        for (int i = 0; i < n; i++) {
+            cin >> value;
+            values.push_back(value);
+        } 
+    }
+};
+
+int main() {
+    string cmd;
+    StreamReader streamReader;
+    do {
+        streamReader.clear();
+        streamReader.read();  
+        Tester tester;
+        tester.addTest(streamReader.getTest(), streamReader.getValues());
+
+        tester.test();
+        cout << "Test again? (Yes/No)" << endl;
+        cin >> cmd;
+    } while (cmd != "No");
+    system("pause");
 
     return 0;
 }
